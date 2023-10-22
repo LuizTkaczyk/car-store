@@ -24,7 +24,12 @@ class VehicleRequest extends FormRequest
     public function rules()
     {
         return [
-            //
+          'model' => 'required|max:30',
+          'brand_id' => 'required',
+          'category_id' => 'required',
+          'year' => 'required',
+          'price' => 'required',
+          'images' => 'nullable|max:2048'
         ];
     }
 }

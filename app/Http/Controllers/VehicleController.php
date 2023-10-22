@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Vehicle;
 use App\Http\Requests\VehicleRequest;
+use App\Models\Images;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class VehicleController extends Controller
 {
@@ -15,7 +18,23 @@ class VehicleController extends Controller
      */
     public function index()
     {
-        //
+        $vehicles = Vehicle::with('images')->get();
+       
+        $vehicles->each(function ($vehicle) {
+            $vehicle->images->each(function ($image) {
+            $imagePath = str_replace('\\', '/', $image->file);
+
+            // Verifica se o arquivo existe
+            $fullPath = storage_path('app/public/' . $imagePath);
+            if (File::exists($fullPath)) {
+                    $imageData = Storage::disk('public')->get($image->file);
+                    $base64Image = base64_encode($imageData);
+                    $image->file = $base64Image;
+                }
+            });
+        });
+
+        return response()->json($vehicles, 200);
     }
 
     /**
@@ -36,7 +55,33 @@ class VehicleController extends Controller
      */
     public function store(VehicleRequest $request)
     {
-        Log::debug($request->all());
+        $data = [
+            'model' => $request->model,
+            'brand_id' => $request->brand_id,
+            'category_id' => $request->category_id,
+            'year' => $request->year,
+            'price' => $request->price
+        ];
+
+        $vehicle = Vehicle::create($data);
+
+        if (count($request->images) > 0) {
+            foreach ($request->images as $base64Image) {
+                $decodedImage = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image));
+                $imageName = uniqid() . '.png';
+                Storage::disk('public')->put('vehicles/' . $imageName, $decodedImage);
+                Images::create([
+                    'file' => 'vehicles/' . $imageName,
+                    'vehicle_id' => $vehicle->id, // Supondo que $vehicle seja o veículo recém-criado
+                ]);
+            }
+        }
+
+        if ($vehicle) {
+            return response()->json(['message' => 'Registro salvo com sucesso', 'data' => $vehicle], 201);
+        } else {
+            return response()->json(['message' => 'Erro ao salvar o registro'], 500);
+        }
     }
 
     /**
