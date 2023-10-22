@@ -18,4 +18,9 @@ class Vehicle extends Model
         'year',
         'price'
     ];
+
+    public function images()
+    {
+        return $this->hasMany(Images::class, 'vehicle_id');
+    }
 }
