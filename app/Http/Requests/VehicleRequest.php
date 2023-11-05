@@ -29,7 +29,8 @@ class VehicleRequest extends FormRequest
           'category_id' => 'required',
           'year' => 'required',
           'price' => 'required',
-          'images' => 'nullable|max:2048'
+          'images' => 'nullable|max:2048',
+          'description' => 'nullable|max:150'
         ];
     }
 }
