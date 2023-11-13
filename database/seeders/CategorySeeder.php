@@ -15,7 +15,9 @@ class CategorySeeder extends Seeder
     public function run()
     {
         Category::insert([
-            'category' => 'Qualquer',
+            ['category' => 'Carro'],
+            ['category' => 'Moto'],
+            ['category' => 'Caminhão'],
         ]);
     }
 }

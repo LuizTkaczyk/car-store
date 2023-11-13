@@ -25,11 +25,18 @@ class Vehicle extends Model
         return $this->hasMany(Images::class, 'vehicle_id');
     }
 
-    public function category(){
+    public function category()
+    {
         return $this->belongsTo(Category::class, 'category_id');
     }
 
-    public function brand(){
+    public function brand()
+    {
         return $this->belongsTo(Brand::class, 'brand_id');
+    }
+
+    public function optional()
+    {
+        return $this->belongsToMany(Optional::class, 'vehicle_has_optional', 'vehicle_id', 'optional_id');
     }
 }

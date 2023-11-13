@@ -15,7 +15,7 @@ class BrandController extends Controller
      */
     public function index()
     {
-        $categories = Brand::all();
+        $categories = Brand::select('id', 'brand')->get();
 
         return response()->json($categories, 200);
     }
