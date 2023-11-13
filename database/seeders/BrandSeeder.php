@@ -15,7 +15,9 @@ class BrandSeeder extends Seeder
     public function run()
     {
         Brand::insert([
-            'brand' => 'Qualquer',
+            ['brand' => 'Fiat'],
+            ['brand' => 'Chevrolet'],
+            ['brand' => 'Volkswagen'],
         ]);
     }
 }

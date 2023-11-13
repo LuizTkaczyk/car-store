@@ -24,8 +24,10 @@ class CreateVehicleTable extends Migration
             $table->foreign('category_id')->references('id')->on('category')->onDelete('restrict');
 
             $table->tinyText('description')->nullable();
+            $table->tinyInteger('mileage')->nullable();
             $table->string('year');
             $table->float('price');
+            
             $table->timestamps();
         });
     }

@@ -30,7 +30,9 @@ class VehicleRequest extends FormRequest
           'year' => 'required',
           'price' => 'required',
           'images' => 'nullable|max:2048',
-          'description' => 'nullable|max:150'
+          'description' => 'nullable|max:150',
+          'mileage' => 'nullable|numeric|max:999999',
+          'optional' => 'nullable',
         ];
     }
 }
