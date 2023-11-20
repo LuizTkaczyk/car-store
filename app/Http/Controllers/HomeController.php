@@ -17,22 +17,7 @@ class HomeController extends Controller
      */
     public function index()
     {
-        $vehicles = Vehicle::with('images', 'category', 'brand','optional')->get();
-       
-        // $vehicles->each(function ($vehicle) {
-        //     $vehicle->images->each(function ($image) {
-        //     $imagePath = str_replace('\\', '/', $image->file);
-
-        //     // Verifica se o arquivo existe
-        //     $fullPath = storage_path('app/public/' . $imagePath);
-        //     if (File::exists($fullPath)) {
-        //             $imageData = Storage::disk('public')->get($image->file);
-        //             $base64Image = base64_encode($imageData);
-        //             $image->file = $base64Image;
-        //         }
-        //     });
-        // });
-
+        $vehicles = Vehicle::with('images', 'category', 'brand','optional')->orderBy('created_at', 'desc')->get();
         return response()->json($vehicles, 200);
     }
 
@@ -65,7 +50,9 @@ class HomeController extends Controller
      */
     public function show($id)
     {
-        //
+        $vehicle = Vehicle::with('images', 'category', 'brand','optional')->find($id);
+        $vehicle->load('images','optional');
+        return response()->json($vehicle, 200);
     }
 
     /**

@@ -23,7 +23,7 @@ class VehicleController extends Controller
     public function index(Request $request)
     {
         $perPage = request('itemPerPage', 10);
-        $vehicles = Vehicle::with(['images', 'category', 'brand', 'optional'])->paginate($perPage, ['*'], 'page', $request->page);
+        $vehicles = Vehicle::with(['images', 'category', 'brand', 'optional'])->orderBy('created_at', 'desc')->paginate($perPage, ['*'], 'page', $request->page);
         return response()->json($vehicles, 200);
     }
 
@@ -48,31 +48,25 @@ class VehicleController extends Controller
             $vehicle = Vehicle::create($data);
 
             if (count($request->images) > 0) {
-                $vehicleFolder = $vehicle->id;
                 foreach ($request->images as $base64Image) {
+                    
                     $decodedImage = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image['file']));
                     $imageName = uniqid() . '.png';
-                    if (!Storage::disk('google')->exists($vehicleFolder)) {
-                        Storage::disk('google')->makeDirectory($vehicleFolder);
-                    }
-
-                    $dir = '/';
-                    $recursive = false; // Get subdirectories also?
-                    $contents = collect(Storage::disk('google')->listContents($dir, $recursive));
-
-                    $dir = $contents->where('type', '=', 'dir')
-                        ->where('filename', '=', $vehicleFolder)
-                        ->first(); // There could be duplicate directory names!
-
-                    Storage::disk('google')->put($dir['path'] . '/' .  $imageName, $decodedImage);
-                    $url = Storage::disk('google')->url($dir['path'] . '/' . $imageName);
-
+                    $path = 'vehicles/'. $vehicle->id . '/' . $imageName;
+                    Storage::disk('public')->put($path, $decodedImage);
                     Images::create([
-                        'file' => $imageName,
-                        'url' =>  $url,
+                        'file' =>  $imageName,
+                        'url' => Storage::url($path),
                         'vehicle_id' => $vehicle->id,
                     ]);
+                   
                 }
+            }else{
+                Images::create([
+                    'file' =>  'defaultImage',
+                    'url' => Storage::url('defaultImage/default.png'),
+                    'vehicle_id' => $vehicle->id,
+                ]);
             }
 
             if (count($request->optional) > 0) {
@@ -96,7 +90,7 @@ class VehicleController extends Controller
             return response()->json(['message' => 'Registro salvo com sucesso', 'data' => $vehicle], 201);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['message' => 'Erro ao salvar o registro', 'error' => $e->getMessage()], 500);
+            return response()->json(['message' => 'Erro ao salvar o registro', 'error' => $e->getTrace()], 500);
         }
     }
 
@@ -107,19 +101,7 @@ class VehicleController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function show(Vehicle $vehicle){
-        $vehicle->load('images'); // Carrega as imagens relacionadas ao veículo
-
-        $vehicle->images->each(function ($image) {
-            $imagePath = str_replace('\\', '/', $image->file);
-            $fullPath = storage_path('app/public/' . $imagePath);
-
-            if (File::exists($fullPath)) {
-                $imageData = Storage::disk('public')->get($image->file);
-                $base64Image = base64_encode($imageData);
-                $image->file = 'data:image/png;base64,' . $base64Image;
-            }
-        });
-
+        $vehicle->load('images','optional');
         return response()->json($vehicle, 200);
     }
 
@@ -132,7 +114,6 @@ class VehicleController extends Controller
      */
     public function update(VehicleRequest $request, Vehicle $vehicle){
         DB::beginTransaction();
-
         try {
             $data = [
                 'model' => $request->model,
@@ -146,46 +127,60 @@ class VehicleController extends Controller
             $vehicle->update($data);
             if (count($request->images)) {
                 foreach ($request->images as $base64Image) {
+                    Images::where('vehicle_id', $vehicle->id)->where('file', 'defaultImage')->delete();
                     if(!array_key_exists('url', $base64Image)) {
+                       
                         $decodedImage = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image['file']));
                         $imageName = uniqid() . '.png';
-                       
-                        $dir = '/';
-                        $recursive = false;
-                        $contents = collect(Storage::disk('google')->listContents($dir, $recursive));
+                        $path = 'vehicles/'. $vehicle->id . '/' . $imageName;
+                      
+                        Storage::disk('public')->put($path, $decodedImage);
                         
-                        $dir = $contents->where('type', '=', 'dir')
-                            ->where('filename', '=', $vehicle->id)
-                            ->first();
-
-                        Storage::disk('google')->put($dir['path'].'/'.$imageName, $decodedImage);
-                        $url = Storage::disk('google')->url($dir['path'] . '/' . $imageName);
-                       
                         Images::create([
-                            'file' => $imageName,
-                            'url' =>  $url,
-                            'vehicle_id' => $vehicle->id,
+                            'file' =>  $imageName,
+                            'url' => Storage::url($path),
+                            'vehicle_id' => $vehicle->id, // Supondo que $vehicle seja o veículo recém-criado
                         ]);
                      
                     };
                 }
+            }else{
+                Images::create([
+                    'file' =>  'defaultImage',
+                    'url' => Storage::url('defaultImage/default.png'),
+                    'vehicle_id' => $vehicle->id,
+                ]);
             }
 
             if(isset($request->imagesToDelete) && count($request->imagesToDelete)){
                 foreach($request->imagesToDelete as $image){
-                    if(!array_key_exists('url', $image)) {
+                    $this->deleteImagesByName($vehicle->id, $image['file']);
+                }
+            }
+
+            if (count($request->optional) > 0) {
+                VehicleHasOptional::where('vehicle_id', $vehicle->id)->delete();
+                foreach ($request->optional as $optional) {
+                    if(!isset($optional['optional'])) {
                         continue;
                     };
-                    $this->deleteImagesByName($vehicle->id, $image['file']);
+                    $option = Optional::create([
+                        'name' => $optional['optional'],
+                    ]);
+
+                    VehicleHasOptional::insert([
+                        'vehicle_id' => $vehicle->id,
+                        'optional_id' => $option->id
+                    ]);
                 }
             }
 
             DB::commit();
 
-            return response()->json(['message' => 'Registro atualizado com sucesso', 'data' => $vehicle], 200);
+            return response()->json(['message' => 'Registro atualizado com sucesso', 'data' => $vehicle->load('optional')], 200);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['message' => 'Erro ao atualizar o registro', 'error' => $e->getMessage()], 500);
+            return response()->json(['message' => 'Erro ao atualizar o registro', 'error' =>  $e->getTrace()], 500);
         }
     }
 
@@ -198,7 +193,7 @@ class VehicleController extends Controller
     public function destroy(Vehicle $vehicle){
         DB::beginTransaction();
         try {
-            $this->deleteImages($vehicle);
+            $this->deleteImageDir($vehicle);
             optional($vehicle->optional)->each->delete();
             $vehicle->delete();
 
@@ -210,35 +205,27 @@ class VehicleController extends Controller
         }
     }
 
-    public function deleteImages(Vehicle $vehicle){
-        $directoryName = $vehicle->id;
-        $dir = '/';
-        $recursive = true; 
-        $contents = collect(Storage::disk('google')->listContents($dir, $recursive));
-
-        $directory = $contents
-            ->where('type', '=', 'dir')
-            ->where('filename', '=', $directoryName)
-            ->first(); 
-
-         Storage::disk('google')->deleteDirectory($directory['path']);
+    public function deleteImageDir(Vehicle $vehicle){
+        $path = 'vehicles/'. $vehicle->id;
+        $fullPath = storage_path('app/public/' . $path);
+       
+        if (File::exists($fullPath)) {
+            File::deleteDirectory($fullPath);
+        }
 
         Images::where('vehicle_id', $vehicle->id)->delete();
     }
 
     public function deleteImagesByName($vehicleId, $imageName){
-
-        $dir = '/';
-        $recursive = true; // Get subdirectories also?
-        $contents = collect(Storage::disk('google')->listContents($dir, $recursive));
-
-        $file = $contents
-            ->where('type', '=', 'file')
-            ->where('filename', '=', pathinfo($imageName, PATHINFO_FILENAME))
-            ->where('extension', '=', pathinfo($imageName, PATHINFO_EXTENSION))
-            ->first(); // there can be duplicate file names!
-
-        Storage::disk('google')->delete($file['path']);
+       
+        $path = 'vehicles/'. $vehicleId . '/' . $imageName;
+        $fullPath = storage_path('app/public/' . $path);
+       
+        if (File::exists($fullPath)) {
+            File::delete($fullPath);
+        }
+        
         Images::where('vehicle_id', $vehicleId)->where('file', $imageName)->delete();
+
     }
 }
