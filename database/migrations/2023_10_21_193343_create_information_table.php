@@ -21,8 +21,7 @@ class CreateInformationTable extends Migration
             $table->string('address_number');
             $table->string('city');
             $table->string('state');
-            $table->integer('contact');
-            $table->string('logo');
+            $table->string('logo')->nullable();
             $table->timestamps();
         });
     }

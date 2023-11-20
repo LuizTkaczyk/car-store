@@ -20,4 +20,8 @@ class Information extends Model
         'state',
         'logo'
     ];
+
+    public function contacts(){
+        return $this->hasMany(Contact::class, 'information_id');
+    }
 }
