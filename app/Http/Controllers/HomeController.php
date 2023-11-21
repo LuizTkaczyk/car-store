@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Contact;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -52,7 +53,8 @@ class HomeController extends Controller
     {
         $vehicle = Vehicle::with('images', 'category', 'brand','optional')->find($id);
         $vehicle->load('images','optional');
-        return response()->json($vehicle, 200);
+        $contacts = Contact::orderBy('created_at', 'desc')->get();
+        return response()->json(['vehicle' => $vehicle, 'contacts' => $contacts], 200);
     }
 
     /**
