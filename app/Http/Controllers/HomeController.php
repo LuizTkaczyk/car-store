@@ -53,8 +53,7 @@ class HomeController extends Controller
     {
         $vehicle = Vehicle::with('images', 'category', 'brand','optional')->find($id);
         $vehicle->load('images','optional');
-        $contacts = Contact::orderBy('created_at', 'desc')->get();
-        return response()->json(['vehicle' => $vehicle, 'contacts' => $contacts], 200);
+        return response()->json(['vehicle' => $vehicle], 200);
     }
 
     /**
@@ -89,5 +88,41 @@ class HomeController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    public function yearAndPrice()
+    {
+        $maxYear = Vehicle::max('year');
+        $minYear = Vehicle::min('year');
+        
+        $maxPrice = Vehicle::max('price');
+        $minPrice = Vehicle::min('price');
+
+        $result = [
+            'maxYear' => $maxYear,
+            'minYear' => $minYear,
+            'maxPrice' => $maxPrice,
+            'minPrice' => $minPrice,
+        ];
+
+        return response()->json($result, 200);
+    }
+
+    public function changeBrand(Request $request){
+        $vehicles = Vehicle::with('images', 'category', 'brand','optional')->where('brand_id', $request['brandId'])->get();
+        return response()->json($vehicles, 200);
+    }
+
+    public function changeCategory(Request $request){
+        Log::debug($request->all());
+    }
+
+
+    public function changeYear(Request $request){
+        Log::debug($request->all());
+    }
+
+    public function changePrice(Request $request){
+        Log::debug($request->all());
     }
 }
