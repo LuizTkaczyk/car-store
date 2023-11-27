@@ -20,10 +20,11 @@ class VehicleController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index()
     {
-        $perPage = request('itemPerPage', 10);
-        $vehicles = Vehicle::with(['images', 'category', 'brand', 'optional'])->orderBy('created_at', 'desc')->paginate($perPage, ['*'], 'page', $request->page);
+        $perPage = request('itemPerPage');
+        $page = request('page');
+        $vehicles = Vehicle::with(['images', 'category', 'brand', 'optional'])->orderBy('created_at', 'desc')->paginate($perPage, ['*'], 'page', $page);
         return response()->json($vehicles, 200);
     }
 
