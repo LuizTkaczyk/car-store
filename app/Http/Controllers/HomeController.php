@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Brand;
+use App\Models\Category;
 use App\Models\Contact;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
@@ -11,83 +13,11 @@ use Illuminate\Support\Facades\Storage;
 
 class HomeController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        $vehicles = Vehicle::with('images', 'category', 'brand','optional')->orderBy('created_at', 'desc')->get();
-        return response()->json($vehicles, 200);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function show($id)
     {
         $vehicle = Vehicle::with('images', 'category', 'brand','optional')->find($id);
         $vehicle->load('images','optional');
         return response()->json(['vehicle' => $vehicle], 200);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
     }
 
     public function yearAndPrice()
@@ -108,21 +38,39 @@ class HomeController extends Controller
         return response()->json($result, 200);
     }
 
-    public function changeBrand(Request $request){
-        $vehicles = Vehicle::with('images', 'category', 'brand','optional')->where('brand_id', $request['brandId'])->get();
-        return response()->json($vehicles, 200);
+    public function getBrands()
+    {
+        $brand = Brand::select('id', 'brand')->get();
+        return response()->json($brand, 200);
     }
 
-    public function changeCategory(Request $request){
-        Log::debug($request->all());
+    public function getCategories()
+    {
+        $categories = Category::select('id', 'category')->get();
+        return response()->json($categories, 200);
     }
+    
+    public function getFilteredVehicles(Request $request){
+        $query = Vehicle::query();
+        if ($request->has('brandId') && $request->input('brandId') != 0) {
+            $query->where('brand_id', $request->input('brandId'));
+        }
+
+        if ($request->has('categoryId') && $request->input('categoryId') != 0) {
+            $query->where('category_id', $request->input('categoryId'));
+        }
+
+        if ($request->has('priceFrom') && $request->input('priceFrom') != 0 && $request->has('priceTo') && $request->input('priceTo') != 0) {
+            $query->whereBetween('price', [$request->input('priceFrom'), $request->input('priceTo')]);
+        }
+
+        if($request->has('yearFrom') && $request->input('yearFrom') != 0 && $request->has('yearTo') && $request->input('yearTo') != 0){
+            $query->whereBetween('year', [$request->input('yearFrom'), $request->input('yearTo')]);
+        }
+
+        $vehicles = $query->with('images', 'category', 'brand','optional')->orderBy('created_at', 'desc')->paginate($request['itemPerPage'], ['*']);
 
 
-    public function changeYear(Request $request){
-        Log::debug($request->all());
-    }
-
-    public function changePrice(Request $request){
-        Log::debug($request->all());
+        return response()->json($vehicles);
     }
 }
