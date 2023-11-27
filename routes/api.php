@@ -8,14 +8,16 @@ use App\Http\Controllers\InformationController;
 use App\Http\Controllers\VehicleController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['cors'])->group(function () {
-    Route::resource('home', HomeController::class);
+Route::middleware(['api'])->prefix('auth')->group(function () {
     Route::resource('vehicle', VehicleController::class);
     Route::resource('category', CategoryController::class);
     Route::resource('brand', BrandController::class);
     Route::resource('information', InformationController::class);
+    Route::post('logout', [AuthController::class, 'logout']);
 });
+
 Route::post('login', [AuthController::class, 'login']);
+Route::resource('home', HomeController::class);
 
 Route::get('year-and-price', [HomeController::class, 'yearAndPrice']);
 Route::get('filtered-vehicles', [HomeController::class, 'getFilteredVehicles']);
