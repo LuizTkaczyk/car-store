@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Information extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'information';
 
     protected $fillable = [
@@ -18,7 +18,8 @@ class Information extends Model
         'address_number',
         'city',
         'state',
-        'logo'
+        'logo',
+        'company_phone'
     ];
 
     public function contacts(){

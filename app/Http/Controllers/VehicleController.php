@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Intervention\Image\ImageManagerStatic as Image;
 
 class VehicleController extends Controller
 {
@@ -34,7 +35,8 @@ class VehicleController extends Controller
      * @param  \App\Http\Requests\VehicleRequest  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(VehicleRequest $request){
+    public function store(VehicleRequest $request)
+    {
         DB::beginTransaction();
         try {
             $data = [
@@ -50,19 +52,32 @@ class VehicleController extends Controller
 
             if (count($request->images) > 0) {
                 foreach ($request->images as $base64Image) {
-                    
+
                     $decodedImage = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image['file']));
+                    $img = Image::make($decodedImage);
+
+                    $img->resize(800, null, function ($constraint) {
+                        $constraint->aspectRatio();
+                    });
+
+                    $quality = 80;
+                    $img->encode('jpg', $quality);
+
                     $imageName = uniqid() . '.png';
-                    $path = 'vehicles/'. $vehicle->id . '/' . $imageName;
-                    Storage::disk('public')->put($path, $decodedImage);
+
+                    $path = 'vehicles/' . $vehicle->id . '/' . $imageName;
+
+                    Storage::disk('public')->put($path, $img);
+
                     Images::create([
-                        'file' =>  $imageName,
+                        'file' => $imageName,
                         'url' => Storage::url($path),
                         'vehicle_id' => $vehicle->id,
                     ]);
-                   
+
+                    $img->destroy();
                 }
-            }else{
+            } else {
                 Images::create([
                     'file' =>  'defaultImage',
                     'url' => Storage::url('defaultImage/default.png'),
@@ -72,7 +87,7 @@ class VehicleController extends Controller
 
             if (count($request->optional) > 0) {
                 foreach ($request->optional as $optional) {
-                    if(!isset($optional['optional'])) {
+                    if (!isset($optional['optional'])) {
                         continue;
                     };
                     $option = Optional::create([
@@ -101,8 +116,9 @@ class VehicleController extends Controller
      * @param  \App\Models\Vehicle  $vehicle
      * @return \Illuminate\Http\Response
      */
-    public function show(Vehicle $vehicle){
-        $vehicle->load('images','optional');
+    public function show(Vehicle $vehicle)
+    {
+        $vehicle->load('images', 'optional');
         return response()->json($vehicle, 200);
     }
 
@@ -113,7 +129,8 @@ class VehicleController extends Controller
      * @param  \App\Models\Vehicle  $vehicle
      * @return \Illuminate\Http\Response
      */
-    public function update(VehicleRequest $request, Vehicle $vehicle){
+    public function update(VehicleRequest $request, Vehicle $vehicle)
+    {
         DB::beginTransaction();
         try {
             $data = [
@@ -129,23 +146,22 @@ class VehicleController extends Controller
             if (count($request->images)) {
                 foreach ($request->images as $base64Image) {
                     Images::where('vehicle_id', $vehicle->id)->where('file', 'defaultImage')->delete();
-                    if(!array_key_exists('url', $base64Image)) {
-                       
+                    if (!array_key_exists('url', $base64Image)) {
+
                         $decodedImage = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image['file']));
                         $imageName = uniqid() . '.png';
-                        $path = 'vehicles/'. $vehicle->id . '/' . $imageName;
-                      
+                        $path = 'vehicles/' . $vehicle->id . '/' . $imageName;
+
                         Storage::disk('public')->put($path, $decodedImage);
-                        
+
                         Images::create([
                             'file' =>  $imageName,
                             'url' => Storage::url($path),
                             'vehicle_id' => $vehicle->id, // Supondo que $vehicle seja o veículo recém-criado
                         ]);
-                     
                     };
                 }
-            }else{
+            } else {
                 Images::create([
                     'file' =>  'defaultImage',
                     'url' => Storage::url('defaultImage/default.png'),
@@ -153,8 +169,8 @@ class VehicleController extends Controller
                 ]);
             }
 
-            if(isset($request->imagesToDelete) && count($request->imagesToDelete)){
-                foreach($request->imagesToDelete as $image){
+            if (isset($request->imagesToDelete) && count($request->imagesToDelete)) {
+                foreach ($request->imagesToDelete as $image) {
                     $this->deleteImagesByName($vehicle->id, $image['file']);
                 }
             }
@@ -162,7 +178,7 @@ class VehicleController extends Controller
             if (count($request->optional) > 0) {
                 VehicleHasOptional::where('vehicle_id', $vehicle->id)->delete();
                 foreach ($request->optional as $optional) {
-                    if(!isset($optional['optional'])) {
+                    if (!isset($optional['optional'])) {
                         continue;
                     };
                     $option = Optional::create([
@@ -191,7 +207,8 @@ class VehicleController extends Controller
      * @param  \App\Models\Vehicle  $vehicle
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Vehicle $vehicle){
+    public function destroy(Vehicle $vehicle)
+    {
         DB::beginTransaction();
         try {
             $this->deleteImageDir($vehicle);
@@ -206,10 +223,11 @@ class VehicleController extends Controller
         }
     }
 
-    public function deleteImageDir(Vehicle $vehicle){
-        $path = 'vehicles/'. $vehicle->id;
+    public function deleteImageDir(Vehicle $vehicle)
+    {
+        $path = 'vehicles/' . $vehicle->id;
         $fullPath = storage_path('app/public/' . $path);
-       
+
         if (File::exists($fullPath)) {
             File::deleteDirectory($fullPath);
         }
@@ -217,16 +235,16 @@ class VehicleController extends Controller
         Images::where('vehicle_id', $vehicle->id)->delete();
     }
 
-    public function deleteImagesByName($vehicleId, $imageName){
-       
-        $path = 'vehicles/'. $vehicleId . '/' . $imageName;
+    public function deleteImagesByName($vehicleId, $imageName)
+    {
+
+        $path = 'vehicles/' . $vehicleId . '/' . $imageName;
         $fullPath = storage_path('app/public/' . $path);
-       
+
         if (File::exists($fullPath)) {
             File::delete($fullPath);
         }
-        
-        Images::where('vehicle_id', $vehicleId)->where('file', $imageName)->delete();
 
+        Images::where('vehicle_id', $vehicleId)->where('file', $imageName)->delete();
     }
 }
