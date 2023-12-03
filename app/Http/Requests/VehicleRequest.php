@@ -33,6 +33,7 @@ class VehicleRequest extends FormRequest
           'description' => 'nullable|max:150',
           'mileage' => 'nullable|numeric|max:999999',
           'optional' => 'nullable',
+
         ];
     }
 }

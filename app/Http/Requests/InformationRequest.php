@@ -30,7 +30,8 @@ class InformationRequest extends FormRequest
             'address_number' => 'required|max:10',
             'city' => 'required|max:30',
             'state' => 'required|max:2',
-            'logo' => 'nullable'
+            'logo' => 'nullable',
+            'company_phone' => 'nullable|max:20',
         ];
     }
 }

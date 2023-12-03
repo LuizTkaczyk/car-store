@@ -19,6 +19,7 @@ Route::middleware(['api'])->group(function () {
         Route::resource('brand', BrandController::class);
         Route::resource('information', InformationController::class);
         Route::post('logout', [AuthController::class, 'logout']);
+        Route::get('refresh', [AuthController::class, 'refresh']);
     });
 
     // Outras rotas públicas (não protegidas)
@@ -27,4 +28,5 @@ Route::middleware(['api'])->group(function () {
     Route::get('filtered-vehicles', [HomeController::class, 'getFilteredVehicles']);
     Route::get('brand-home', [HomeController::class, 'getBrands']);
     Route::get('category-home', [HomeController::class, 'getCategories']);
+    Route::get('company-info', [HomeController::class, 'companyInfo']);
 });

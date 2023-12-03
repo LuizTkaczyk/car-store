@@ -16,9 +16,10 @@ class CreateInformationTable extends Migration
         Schema::create('information', function (Blueprint $table) {
             $table->id();
             $table->string('company_name');
-            $table->string('cnpj_cpf');
+            $table->string('cnpj_cpf')->nullable();
             $table->string('address');
             $table->string('address_number');
+            $table->string('company_phone');
             $table->string('city');
             $table->string('state');
             $table->string('logo')->nullable();

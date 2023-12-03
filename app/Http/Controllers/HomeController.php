@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Contact;
+use App\Models\Information;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -17,14 +18,15 @@ class HomeController extends Controller
     {
         $vehicle = Vehicle::with('images', 'category', 'brand','optional')->find($id);
         $vehicle->load('images','optional');
-        return response()->json(['vehicle' => $vehicle], 200);
+        $contacts = Contact::orderBy('created_at', 'desc')->get();
+        return response()->json(['vehicle' => $vehicle, 'contacts' => $contacts], 200);
     }
 
     public function yearAndPrice()
     {
         $maxYear = Vehicle::max('year');
         $minYear = Vehicle::min('year');
-        
+
         $maxPrice = Vehicle::max('price');
         $minPrice = Vehicle::min('price');
 
@@ -49,7 +51,7 @@ class HomeController extends Controller
         $categories = Category::select('id', 'category')->get();
         return response()->json($categories, 200);
     }
-    
+
     public function getFilteredVehicles(Request $request){
         $query = Vehicle::query();
         if ($request->has('brandId') && $request->input('brandId') != 0) {
@@ -72,5 +74,10 @@ class HomeController extends Controller
 
 
         return response()->json($vehicles);
+    }
+
+    public function companyInfo(){
+        $info = Information::first();
+        return response()->json($info, 200);
     }
 }

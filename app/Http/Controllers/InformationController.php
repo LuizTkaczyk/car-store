@@ -42,7 +42,8 @@ class InformationController extends Controller
                 'address_number' => $request->address_number,
                 'city' => $request->city,
                 'state' => $request->state,
-                'logo' => $logoUrl
+                'logo' => $logoUrl,
+                'company_phone' => $request->company_phone
             ];
 
             $information = Information::create($data);
@@ -62,7 +63,7 @@ class InformationController extends Controller
             DB::commit();
 
            return response()->json(['message' => 'Informações salvas com sucesso', 'data' => $information], 201);
-        } 
+        }
         catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['message' => 'Erro ao salvar informações', 'error' => $e->getTrace()], 500);
@@ -78,11 +79,11 @@ class InformationController extends Controller
     public function show(Information $information)
     {
         $information->load('contacts');
-        
+
         if($information->logo){
             $imagePath = str_replace('/', '\\', $information->logo);
             $fullPath = storage_path('app\public\\' . $imagePath);
-    
+
             if (File::exists($fullPath)) {
                 $imageData = Storage::disk('public')->get($information->logo);
                 $base64Image = base64_encode($imageData);
@@ -107,7 +108,7 @@ class InformationController extends Controller
         try {
             $logoUrl = null;
             $this->deleteLogo($information);
-            
+
             if ($request->logo) {
                 $decodedImage = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $request->logo));
                 $imageName = uniqid() . '.png';
@@ -116,7 +117,7 @@ class InformationController extends Controller
             }else{
                 $logoUrl = '';
             }
-           
+
             $data = [
                 'company_name' => $request->company_name,
                 'cnpj_cpf' => $request->cnpj_cpf,
@@ -128,7 +129,7 @@ class InformationController extends Controller
             ];
 
             $information->update($data);
-            
+
             if (count($request->contact) > 0) {
                 Contact::where('information_id', $information->id)->delete();
                 foreach ($request->contact as $contact) {
@@ -138,7 +139,7 @@ class InformationController extends Controller
                             'phone' => $contact['phone'],
                             'information_id' => $information->id
                         ]);
-                        
+
                     }
                 }
             }
