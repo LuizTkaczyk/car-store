@@ -2,9 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-
 class AuthController extends Controller
 {
 
@@ -39,7 +36,6 @@ class AuthController extends Controller
 
     public function refresh()
     {
-        Log::debug('refresh');
         return $this->respondWithToken(auth()->refresh());
     }
 
@@ -47,7 +43,7 @@ class AuthController extends Controller
     {
         return response()->json([
             'access_token' => $token,
-            'expires_in' => auth()->factory()->getTTL() * 60
+            // 'expires_in' => auth()->factory()->getTTL() * 60
         ]);
     }
 }
