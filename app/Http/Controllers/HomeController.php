@@ -8,9 +8,6 @@ use App\Models\Contact;
 use App\Models\Information;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class HomeController extends Controller
 {
@@ -22,7 +19,7 @@ class HomeController extends Controller
         return response()->json(['vehicle' => $vehicle, 'contacts' => $contacts], 200);
     }
 
-    public function yearAndPrice()
+    public function filterValues()
     {
         $maxYear = Vehicle::max('year');
         $minYear = Vehicle::min('year');
@@ -30,26 +27,19 @@ class HomeController extends Controller
         $maxPrice = Vehicle::max('price');
         $minPrice = Vehicle::min('price');
 
+        $categories = Category::select('id', 'category')->get();
+        $brands = Brand::select('id', 'brand')->get();
+
         $result = [
             'maxYear' => $maxYear,
             'minYear' => $minYear,
             'maxPrice' => $maxPrice,
             'minPrice' => $minPrice,
+            'categories' => $categories,
+            'brands' => $brands
         ];
 
         return response()->json($result, 200);
-    }
-
-    public function getBrands()
-    {
-        $brand = Brand::select('id', 'brand')->get();
-        return response()->json($brand, 200);
-    }
-
-    public function getCategories()
-    {
-        $categories = Category::select('id', 'category')->get();
-        return response()->json($categories, 200);
     }
 
     public function getFilteredVehicles(Request $request){

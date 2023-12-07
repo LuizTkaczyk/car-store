@@ -20,13 +20,11 @@ Route::middleware(['api'])->group(function () {
         Route::resource('information', InformationController::class);
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('refresh', [AuthController::class, 'refresh']);
-    });
+            });
 
     // Outras rotas públicas (não protegidas)
     Route::resource('home', HomeController::class);
-    Route::get('year-and-price', [HomeController::class, 'yearAndPrice']);
+    Route::get('filter-values', [HomeController::class, 'filterValues']);
     Route::get('filtered-vehicles', [HomeController::class, 'getFilteredVehicles']);
-    Route::get('brand-home', [HomeController::class, 'getBrands']);
-    Route::get('category-home', [HomeController::class, 'getCategories']);
     Route::get('company-info', [HomeController::class, 'companyInfo']);
 });
