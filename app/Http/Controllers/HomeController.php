@@ -59,6 +59,19 @@ class HomeController extends Controller
         if($request->has('yearFrom') && $request->input('yearFrom') != 0 && $request->has('yearTo') && $request->input('yearTo') != 0){
             $query->whereBetween('year', [$request->input('yearFrom'), $request->input('yearTo')]);
         }
+        $filter = request('searchFilter');
+        if ($request->has('searchFilter')) {
+            $query->where(function ($query) use ($filter) {
+                $query->where('model', 'like', "%$filter%")
+                      ->orWhereHas('category', function ($query) use ($filter) {
+                          $query->where('category', 'like', "%$filter%");
+                      })
+                      ->orWhereHas('brand', function ($query) use ($filter) {
+                          $query->where('brand', 'like', "%$filter%");
+                      });
+            });
+        }
+
 
         $vehicles = $query->with('images', 'category', 'brand','optional')->orderBy('created_at', 'desc')->paginate($request['itemPerPage'], ['*']);
 

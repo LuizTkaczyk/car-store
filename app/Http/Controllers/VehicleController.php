@@ -25,7 +25,25 @@ class VehicleController extends Controller
     {
         $perPage = request('itemPerPage');
         $page = request('page');
-        $vehicles = Vehicle::with(['images', 'category', 'brand', 'optional'])->orderBy('created_at', 'desc')->paginate($perPage, ['*'], 'page', $page);
+
+        $query = Vehicle::with(['images', 'category', 'brand', 'optional'])
+            ->orderBy('created_at', 'desc');
+
+        $filter = request('name');
+        if ($filter) {
+            $query->where(function ($query) use ($filter) {
+                $query->where('model', 'like', "%$filter%")
+                      ->orWhereHas('category', function ($query) use ($filter) {
+                          $query->where('category', 'like', "%$filter%");
+                      })
+                      ->orWhereHas('brand', function ($query) use ($filter) {
+                          $query->where('brand', 'like', "%$filter%");
+                      });
+            });
+        }
+
+        $vehicles = $query->paginate($perPage, ['*'], 'page', $page);
+
         return response()->json($vehicles, 200);
     }
 

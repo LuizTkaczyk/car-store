@@ -9,20 +9,17 @@ use App\Http\Controllers\VehicleController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['api'])->group(function () {
-    // Rotas públicas (não protegidas)
-    Route::post('login', [AuthController::class, 'login']);
 
-    // Rotas protegidas (requerem autenticação)
+    Route::post('login', [AuthController::class, 'login']);
     Route::middleware('auth:api')->group(function () {
-        Route::resource('vehicle', VehicleController::class);
-        Route::resource('category', CategoryController::class);
-        Route::resource('brand', BrandController::class);
+        Route::resource('vehicles', VehicleController::class);
+        Route::resource('categories', CategoryController::class);
+        Route::resource('brands', BrandController::class);
         Route::resource('information', InformationController::class);
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('refresh', [AuthController::class, 'refresh']);
-            });
+    });
 
-    // Outras rotas públicas (não protegidas)
     Route::resource('home', HomeController::class);
     Route::get('filter-values', [HomeController::class, 'filterValues']);
     Route::get('filtered-vehicles', [HomeController::class, 'getFilteredVehicles']);
