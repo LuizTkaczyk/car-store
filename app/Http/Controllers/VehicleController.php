@@ -70,30 +70,7 @@ class VehicleController extends Controller
 
             if (count($request->images) > 0) {
                 foreach ($request->images as $base64Image) {
-
-                    $decodedImage = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image['file']));
-                    $img = Image::make($decodedImage);
-
-                    $img->resize(800, null, function ($constraint) {
-                        $constraint->aspectRatio();
-                    });
-
-                    $quality = 80;
-                    $img->encode('jpg', $quality);
-
-                    $imageName = uniqid() . '.png';
-
-                    $path = 'vehicles/' . $vehicle->id . '/' . $imageName;
-
-                    Storage::disk('public')->put($path, $img);
-
-                    Images::create([
-                        'file' => $imageName,
-                        'url' => Storage::url($path),
-                        'vehicle_id' => $vehicle->id,
-                    ]);
-
-                    $img->destroy();
+                    $this->saveImage($base64Image, $vehicle);
                 }
             } else {
                 Images::create([
@@ -165,18 +142,7 @@ class VehicleController extends Controller
                 foreach ($request->images as $base64Image) {
                     Images::where('vehicle_id', $vehicle->id)->where('file', 'defaultImage')->delete();
                     if (!array_key_exists('url', $base64Image)) {
-
-                        $decodedImage = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image['file']));
-                        $imageName = uniqid() . '.png';
-                        $path = 'vehicles/' . $vehicle->id . '/' . $imageName;
-
-                        Storage::disk('public')->put($path, $decodedImage);
-
-                        Images::create([
-                            'file' =>  $imageName,
-                            'url' => Storage::url($path),
-                            'vehicle_id' => $vehicle->id, // Supondo que $vehicle seja o veículo recém-criado
-                        ]);
+                        $this->saveImage($base64Image, $vehicle);
                     };
                 }
             } else {
@@ -264,5 +230,31 @@ class VehicleController extends Controller
         }
 
         Images::where('vehicle_id', $vehicleId)->where('file', $imageName)->delete();
+    }
+
+    public function saveImage($base64Image, $vehicle){
+        $decodedImage = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image['file']));
+        $img = Image::make($decodedImage);
+
+        $img->resize(800, null, function ($constraint) {
+            $constraint->aspectRatio();
+        });
+
+        $quality = 80;
+        $img->encode('jpg', $quality);
+
+        $imageName = uniqid() . '.png';
+
+        $path = 'vehicles/' . $vehicle->id . '/' . $imageName;
+
+        Storage::disk('public')->put($path, $img);
+
+        Images::create([
+            'file' => $imageName,
+            'url' => Storage::url($path),
+            'vehicle_id' => $vehicle->id,
+        ]);
+
+        $img->destroy();
     }
 }
