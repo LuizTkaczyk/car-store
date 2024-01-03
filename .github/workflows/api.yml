@@ -27,6 +27,15 @@ jobs:
       - name: Generate Application Key
         run: php artisan key:generate
 
+      - name: Setup MySQL
+        uses: mysql/mysql-server-action@v2
+        with:
+          mysql-version: '8.0'
+          mysql-database: ${{ secrets.MYSQL_DATABASE }}
+          mysql-user: ${{ secrets.MYSQL_USER }}
+          mysql-password: ${{ secrets.MYSQL_PASSWORD }}
+
+
       - name: Migrate Database
         run: php artisan migrate --force
 
@@ -39,5 +48,5 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: .  # Use o diretório atual para enviar todos os arquivos do projeto Laravel
-          server-dir: /  # Atualize com o diretório de destino no cPanel
+          local-dir: .
+          server-dir: /
