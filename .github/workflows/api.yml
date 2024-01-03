@@ -9,16 +9,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
-          MYSQL_USER: ${{ secrets.MYSQL_USER }}
-          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-        ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
 
     steps:
       - name: Checkout Repository
@@ -37,6 +28,13 @@ jobs:
 
       - name: Generate Application Key
         run: php artisan key:generate
+
+      - name: Set up MySQL
+        uses: actions/setup-mysql@v2
+        with:
+          mysql-version: 8.0  # ajuste conforme sua versão do MySQL
+          root-password: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+
 
       - name: Migrate Database
         run: php artisan migrate --force
