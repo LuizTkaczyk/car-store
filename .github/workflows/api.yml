@@ -9,6 +9,17 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+          MYSQL_DATABASE: luizan96_car_store  # ajuste conforme o nome do seu banco de dados
+          MYSQL_USER: luizan96_luiztka
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
 
     steps:
@@ -29,13 +40,6 @@ jobs:
       - name: Generate Application Key
         run: php artisan key:generate
 
-      - name: Set up MySQL
-        uses: softprops/action-gh-release@v1
-        with:
-          files: bin/mysql
-        env:
-          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-
       - name: Migrate Database
         run: php artisan migrate --force
 
@@ -50,3 +54,4 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: .
           server-dir: /
+
