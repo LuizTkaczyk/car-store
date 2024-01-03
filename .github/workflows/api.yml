@@ -30,11 +30,11 @@ jobs:
         run: php artisan key:generate
 
       - name: Set up MySQL
-        uses: actions/setup-mysql@v2
+        uses: softprops/action-gh-release@v1
         with:
-          mysql-version: 8.0  # ajuste conforme sua versão do MySQL
-          root-password: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-
+          files: bin/mysql
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
 
       - name: Migrate Database
         run: php artisan migrate --force
