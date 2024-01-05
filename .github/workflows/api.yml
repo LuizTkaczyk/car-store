@@ -46,6 +46,6 @@ jobs:
         server-dir: /
 
     - name: Execute deploy script on server
-      run: sshpass -p ${{ secrets.SSH_PASSWORD }} ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.HOST }} "cd /var/www/html && ./server_deploy.sh"
+      run: sshpass -p ${{ secrets.SSH_PASSWORD }} ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.HOST }} "cd api.luizantonio.dev.br/var/www/html && ./server_deploy.sh"
 
 
