@@ -36,14 +36,21 @@ jobs:
         mkdir -p database
         touch database/database.sqlite
 
-    - name: Deploy to cPanel via FTP
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+    # - name: Deploy to cPanel via FTP
+    #   uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+    #   with:
+    #     server: ${{ secrets.FTP_SERVER }}
+    #     username: ${{ secrets.FTP_USERNAME }}
+    #     password: ${{ secrets.FTP_PASSWORD }}
+    #     local-dir: ./
+    #     server-dir: /
+
+    - name: Deploy to production
+      uses: appleboy/ssh-action@master
       with:
-        server: ${{ secrets.FTP_SERVER }}
-        username: ${{ secrets.FTP_USERNAME }}
-        password: ${{ secrets.FTP_PASSWORD }}
-        local-dir: ./
-        server-dir: /
+        username: ${{ secrets.SSH_USERNAME }}
+        host: ${{ secrets.SSH_HOST }}
+        password: ${{ secrets.SSH_PASSWORD }}
         script: 'cd /var/www/html && ./server_deploy.sh'
 
     # - name: Run Laravel Composer Install and Autoload Dump
