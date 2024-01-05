@@ -5,56 +5,6 @@ on:
     branches:
       - main
 
-# jobs:
-#   deploy:
-#     runs-on: ubuntu-latest
-
-#     services:
-#       mysql:
-#         image: mysql:8.0
-#         env:
-#           MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-#           MYSQL_DATABASE: luizan96_car_store  # ajuste conforme o nome do seu banco de dados
-#           MYSQL_USER: luizan96_luiztka
-#           MYSQL_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-#         ports:
-#           - 3306:3306
-#         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-
-
-#     steps:
-#       - name: Checkout Repository
-#         uses: actions/checkout@v3
-
-#       - name: Setup PHP
-#         uses: shivammathur/setup-php@v2
-#         with:
-#           php-version: '8.1'
-
-#       - name: Install Composer Dependencies
-#         run: composer install --no-dev --optimize-autoloader
-
-#       - name: Configure Laravel Environment
-#         run: cp .env.example .env
-
-#       - name: Generate Application Key
-#         run: php artisan key:generate
-
-#       - name: Migrate Database
-#         run: php artisan migrate --force
-
-#       - name: Optimize Laravel
-#         run: php artisan optimize
-
-#       - name: Deploy to cPanel via FTP
-#         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-#         with:
-#           server: ${{ secrets.FTP_SERVER }}
-#           username: ${{ secrets.FTP_USERNAME }}
-#           password: ${{ secrets.FTP_PASSWORD }}
-#           local-dir: .
-#           server-dir: /
-
 jobs:
   laravel-tests:
 
@@ -94,3 +44,6 @@ jobs:
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./
         server-dir: /
+
+    - name: Run Laravel Migrations
+      run: php artisan migrate
