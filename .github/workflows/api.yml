@@ -46,4 +46,12 @@ jobs:
         server-dir: /
 
     - name: Run Laravel Migrations
-      run: php artisan migrate
+      run: php artisan migrate --verbose
+
+    - name: Run Laravel Composer Install and Autoload Dump
+      run: |
+          composer install --no-scripts --no-interaction --prefer-dist
+          composer du
+
+    - name: Run Laravel Optimize
+      run: php artisan optimize
