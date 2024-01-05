@@ -45,8 +45,8 @@ jobs:
         local-dir: ./
         server-dir: /
 
-    - name: Run Laravel Migrations
-      run: php artisan migrate --verbose
+    # - name: Run Laravel Migrations
+    #   run: php artisan migrate --verbose
 
     - name: Run Laravel Composer Install and Autoload Dump
       run: |
