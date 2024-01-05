@@ -10,16 +10,6 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    services:
-      mysql:
-          image: mysql:5.7
-          env:
-              MYSQL_ALLOW_EMPTY_PASSWORD: yes
-              MYSQL_DATABASE: luizan96_car_store
-          ports:
-              - 3306
-          options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-
     steps:
     - uses: shivammathur/setup-php@15c43e89cdef867065b0213be354c2841860869e
       with:
@@ -54,14 +44,12 @@ jobs:
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./
         server-dir: /
+        script: 'cd /var/www/html && ./server_deploy.sh'
 
-    - name: Run Laravel Migrations
-      run: php artisan migrate --verbose
+    # - name: Run Laravel Composer Install and Autoload Dump
+    #   run: |
+    #       composer install --no-scripts --no-interaction --prefer-dist
+    #       composer du
 
-    - name: Run Laravel Composer Install and Autoload Dump
-      run: |
-          composer install --no-scripts --no-interaction --prefer-dist
-          composer du
-
-    - name: Run Laravel Optimize
-      run: php artisan optimize
+    # - name: Run Laravel Optimize
+    #   run: php artisan optimize
