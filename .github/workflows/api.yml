@@ -46,6 +46,11 @@ jobs:
         server-dir: /
 
     - name: Execute deploy script on server
-      run: sshpass -p 3wa3C1ye7W ssh luizan96@162.241.203.10 "cd /home2/luizan96/api.luizantonio.dev.br && ./server_deploy.sh"
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_PASSWORD }}
+        script: 'cd /home2/luizan96/api.luizantonio.dev.br && ./server_deploy.sh'
 
 
