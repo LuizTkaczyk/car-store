@@ -1,4 +1,5 @@
 #!/bin/sh
+source ~/.bashrc
 set -e
 
 echo "Deploying application ..."
