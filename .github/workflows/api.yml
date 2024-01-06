@@ -52,7 +52,7 @@ jobs:
         username: ${{ secrets.SSH_USERNAME }}
         key: ${{ secrets.SSH_PASSWORD }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
-        script: 'cd /home2/luizan96/api.luizantonio.dev.br && ./server_deploy.sh'
+        script: 'cd /home2/${{ secrets.SSH_USERNAME }}/api.luizantonio.dev.br && ./server_deploy.sh'
         use_insecure_cipher: true
 
 
