@@ -5,7 +5,7 @@ set -e
 echo "Deploying application ..."
 
 # Install dependencies based on lock file
-composer install --no-interaction --prefer-dist --optimize-autoloader
+# composer install --no-interaction --prefer-dist --optimize-autoloader
 
 # Migrate database
 php artisan migrate --force
