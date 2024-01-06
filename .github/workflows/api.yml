@@ -53,6 +53,6 @@ jobs:
         key: ${{ secrets.SSH_PASSWORD }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         script: 'cd /home2/luizan96/api.luizantonio.dev.br && ./server_deploy.sh'
-
+        KEX_ALGORITHMS: 'diffie-hellman-group-exchange-sha256'
 
 
