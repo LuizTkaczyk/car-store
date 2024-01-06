@@ -45,12 +45,14 @@ jobs:
         local-dir: ./
         server-dir: /
 
-    - name: Use SSH key with webfactory/ssh-agent
-      uses: webfactory/ssh-agent@v0.5.0
-      with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
     - name: Execute deploy script on server
-      run: ssh luizan96@162.241.203.10 "cd /home2/luizan96/api.luizantonio.dev.br && ./server_deploy.sh"
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_PASSWORD }}
+        passphrase: ${{ secrets.PASSPHRASE }}
+        script: 'cd /home2/luizan96/api.luizantonio.dev.br && ./server_deploy.sh'
+
 
 
