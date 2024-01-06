@@ -1,12 +1,11 @@
 #!/bin/sh
 source ~/.bashrc
 set -e
-export PATH="$PATH:/opt/cpanel/composer/bin/composer"
 
 echo "Deploying application ..."
 
 # Install dependencies based on lock file
-composer install --no-interaction --prefer-dist --optimize-autoloader
+/opt/cpanel/composer/bin/composer install --no-interaction --prefer-dist --optimize-autoloader
 
 # Migrate database
 php artisan migrate --force
