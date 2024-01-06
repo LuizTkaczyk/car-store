@@ -51,7 +51,7 @@ jobs:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USERNAME }}
         key: ${{ secrets.SSH_PASSWORD }}
-        passphrase: ${{ secrets.PASSPHRASE }}
+        passphrase: ${{ secrets.SSH_PASSPHRASE }}
         script: 'cd /home2/luizan96/api.luizantonio.dev.br && ./server_deploy.sh'
 
 
