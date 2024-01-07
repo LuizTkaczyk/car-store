@@ -16,19 +16,11 @@ jobs:
         php-version: '8.0'
     - uses: actions/checkout@v3
 
-    - name: Update Composer
-      run: composer update -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
-
-    - name: Install Dependencies
-      run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+    - name: Update Composer and Install Dependencies
+      run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
     - name: Directory Permissions
       run: chmod -R 777 storage bootstrap/cache
-
-    - name: Create Database
-      run: |
-        mkdir -p database
-        touch database/database.sqlite
 
     - name: Deploy to cPanel via FTP
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
