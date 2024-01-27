@@ -30,8 +30,9 @@ class InformationController extends Controller
 
                 $decodedImage = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $request->logo));
                 $imageName = uniqid() . '.png';
-                Storage::disk('public')->put('logo/' . $imageName, $decodedImage);
-                $logoUrl = 'logo/' . $imageName;
+                $url = 'logo/' . $imageName;
+                Storage::disk('public')->put($url, $decodedImage);
+                $logoUrl = Storage::url($url);
             }
 
 
@@ -51,7 +52,6 @@ class InformationController extends Controller
 
             if (count($request->contact) > 0) {
                 foreach ($request->contact as $contact) {
-                    Log::debug($contact['name']);
                     Contact::insert([
                         'name' => $contact['name'],
                         'phone' => $contact['phone'],
@@ -112,8 +112,10 @@ class InformationController extends Controller
             if ($request->logo) {
                 $decodedImage = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $request->logo));
                 $imageName = uniqid() . '.png';
-                Storage::disk('public')->put('logo/' . $imageName, $decodedImage);
-                $logoUrl = 'logo/' . $imageName;
+                $url = 'logo/' . $imageName;
+                Storage::disk('public')->put($url, $decodedImage);
+                $logoUrl = Storage::url($url);
+
             }else{
                 $logoUrl = '';
             }
