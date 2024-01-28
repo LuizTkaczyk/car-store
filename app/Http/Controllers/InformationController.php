@@ -112,9 +112,17 @@ class InformationController extends Controller
             if ($request->logo) {
                 $decodedImage = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $request->logo));
                 $imageName = uniqid() . '.png';
-                $url = 'logo/' . $imageName;
-                Storage::disk('public')->put($url, $decodedImage);
-                $logoUrl = Storage::url($url);
+                $logoUrl = 'logo/' . $imageName;
+
+                $ftp = Storage::createFtpDriver([
+                    'driver'   => 'ftp',
+                    'host'     => env('FTP_HOST'),
+                    'username' => env('FTP_USERNAME'),
+                    'password' => env('FTP_PASSWORD'),
+                    'port'     => 21
+                 ]);
+
+                 $ftp->put('assets/logo/logo.png',  $decodedImage);
 
             }else{
                 $logoUrl = '';
