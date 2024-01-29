@@ -106,7 +106,7 @@ class InformationController extends Controller
         DB::beginTransaction();
 
         try {
-            $logoId = null;
+            $logoUrl = null;
             $imageLogo = null;
             $this->deleteLogo($information);
 
@@ -128,16 +128,16 @@ class InformationController extends Controller
                     ]);
 
                     try {
-                        $logoId = uniqid();
-                        $path = 'assets/logo/logo' . $logoId . '.png';
-                        $ftp->put($path, $imageLogo);
+                        $ftp->put('assets/logo/logo.png', $imageLogo);
+                        $imageName = uniqid() . '.png';
+                        $logoUrl = 'logo/' . $imageName;
                     } catch (\Exception $e) {
                        return response()->json(['message' => 'Erro ao atualizar as informações', 'error' => $e->getMessage()], 500);
                     }
                 }
 
             } else {
-                $logoId = '';
+                $logoUrl = '';
             }
 
             $data = [
@@ -147,7 +147,7 @@ class InformationController extends Controller
                 'address_number' => $request->address_number,
                 'city' => $request->city,
                 'state' => $request->state,
-                'logo' => $logoId
+                'logo' => $logoUrl
             ];
 
             $information->update($data);
@@ -191,5 +191,4 @@ class InformationController extends Controller
         $imageConverted = $img->encode('png')->encoded;
 
         return $imageConverted;
-    }
-}
+        }
