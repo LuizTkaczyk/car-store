@@ -114,7 +114,7 @@ class InformationController extends Controller
                 $decodedImage = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $request->logo));
 
                 if ($decodedImage === false) {
-                    return response()->json(['message' => 'Erro ao atualizar as informações', 'error' => $e->getMessage()], 500);
+                    return response()->json(['message' => 'Erro ao atualizar as informações', 'error' => 'Erro ao salvar imagem'], 500);
                 } else {
                     $imageLogo = $this->convertImageLogo($decodedImage);
 
@@ -132,10 +132,9 @@ class InformationController extends Controller
                         $imageName = uniqid() . '.png';
                         $logoUrl = 'logo/' . $imageName;
                     } catch (\Exception $e) {
-                       return response()->json(['message' => 'Erro ao atualizar as informações', 'error' => $e->getMessage()], 500);
+                        return response()->json(['message' => 'Erro ao atualizar as informações', 'error' => $e->getMessage()], 500);
                     }
                 }
-
             } else {
                 $logoUrl = '';
             }
@@ -183,7 +182,8 @@ class InformationController extends Controller
         }
     }
 
-    private function convertImageLogo($base64Image){
+    private function convertImageLogo($base64Image)
+    {
         $img = Image::make($base64Image);
 
         $img->trim('transparent', ['top', 'bottom', 'left', 'right']);
@@ -191,4 +191,5 @@ class InformationController extends Controller
         $imageConverted = $img->encode('png')->encoded;
 
         return $imageConverted;
-        }
+    }
+}
