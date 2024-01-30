@@ -117,22 +117,11 @@ class InformationController extends Controller
                     return response()->json(['message' => 'Erro ao atualizar as informações', 'error' => 'Erro ao salvar imagem'], 500);
                 } else {
                     $imageLogo = $this->convertImageLogo($decodedImage);
-
-
-                    $ftp = Storage::createFtpDriver([
-                        'driver'   => 'ftp',
-                        'host'     => env('FTP_HOST'),
-                        'username' => env('FTP_USERNAME'),
-                        'password' => env('FTP_PASSWORD'),
-                        'port'     => 21
-                    ]);
-
-                    try {
-                        $ftp->put('assets/logo/logo.png', $imageLogo);
-                        $imageName = uniqid() . '.png';
-                        $logoUrl = 'logo/' . $imageName;
-                    } catch (\Exception $e) {
-                        return response()->json(['message' => 'Erro ao atualizar as informações', 'error' => $e->getMessage()], 500);
+                    $imageName = uniqid() . '.png';
+                    $logoUrl = 'logo/' . $imageName;
+                    $savedLogo = Storage::disk('ftp')->put('assets/logo/logo.png', $imageLogo);
+                    if(!$savedLogo) {
+                        return response()->json(['message' => 'Erro ao atualizar as informações', 'error' => 'Erro ao salvar imagem'], 500);
                     }
                 }
             } else {
