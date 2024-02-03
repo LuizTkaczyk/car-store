@@ -22,20 +22,38 @@ class InformationController extends Controller
     public function store(InformationRequest $request)
     {
         if ($request->id) {
-            $this->update($request, Information::find($request->id));
-            return;
+            return $this->update($request, Information::find($request->id));
         }
         DB::beginTransaction();
         try {
             if ($request->logo) {
-
                 $decodedImage = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $request->logo));
-                $imageName = uniqid() . '.png';
-                $url = 'logo/' . $imageName;
-                Storage::disk('public')->put($url, $decodedImage);
-                $logoUrl = Storage::url($url);
+
+                if ($decodedImage === false) {
+                    return response()->json(['message' => 'Erro ao atualizar as informações', 'error' => 'Erro ao salvar imagem'], 500);
+                } else {
+                    $imageLogo = $this->convertImageLogo($decodedImage);
+                    $imageName = uniqid() . '.png';
+                    $logoUrl = 'logo/' . $imageName;
+                    $savedLogo = Storage::disk('ftp')->put('assets/logo/logo.png', $imageLogo);
+                    if(!$savedLogo) {
+                        return response()->json(['message' => 'Erro ao atualizar as informações', 'error' => 'Erro ao salvar imagem'], 500);
+                    }
+                }
+            } else {
+                $logoUrl = '';
             }
 
+            $infos = [
+                'title' => $request->company_name,
+            ];
+            $jsonData = json_encode($infos, JSON_PRETTY_PRINT);
+
+            $savedInfos = Storage::disk('ftp')->put('assets/infos/info.json', $jsonData);
+
+            if(!$savedInfos) {
+                return response()->json(['message' => 'Erro ao atualizar as informações', 'error' => 'Erro ao salvar informações'], 500);
+            }
 
             $data = [
                 'company_name' => $request->company_name,
@@ -121,11 +139,21 @@ class InformationController extends Controller
                     $logoUrl = 'logo/' . $imageName;
                     $savedLogo = Storage::disk('ftp')->put('assets/logo/logo.png', $imageLogo);
                     if(!$savedLogo) {
+                        $logoUrl = '';
                         return response()->json(['message' => 'Erro ao atualizar as informações', 'error' => 'Erro ao salvar imagem'], 500);
                     }
                 }
-            } else {
-                $logoUrl = '';
+            }
+
+            $infos = [
+                'title' => $request->company_name,
+            ];
+            $jsonData = json_encode($infos, JSON_PRETTY_PRINT);
+
+            $savedInfos = Storage::disk('ftp')->put('assets/infos/info.json', $jsonData);
+
+            if(!$savedInfos) {
+                return response()->json(['message' => 'Erro ao atualizar as informações', 'error' => 'Erro ao salvar informações'], 500);
             }
 
             $data = [
@@ -154,7 +182,6 @@ class InformationController extends Controller
             }
 
             DB::commit();
-
             return response()->json(['message' => 'Informações atualizadas com sucesso', 'data' => $information], 200);
         } catch (\Exception $e) {
             DB::rollBack();
