@@ -15,7 +15,8 @@ Route::middleware(['api'])->group(function () {
         Route::resource('vehicles', VehicleController::class);
         Route::resource('categories', CategoryController::class);
         Route::resource('brands', BrandController::class);
-        Route::resource('information', InformationController::class);
+        Route::get('get-information',[InformationController::class, 'getInformation']);
+        Route::post('save-information',[InformationController::class, 'saveInformation']);
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('refresh', [AuthController::class, 'refresh']);
     });

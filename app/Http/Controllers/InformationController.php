@@ -29,7 +29,7 @@ class InformationController extends Controller
 
     }
 
-    public function store(InformationRequest $request)
+    public function saveInformation(InformationRequest $request)
     {
         if ($request->id) {
             return $this->update($request, Information::find($request->id));
@@ -37,13 +37,12 @@ class InformationController extends Controller
         DB::beginTransaction();
         try {
             if ($request->logo) {
-                $decodedImage = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $request->logo));
-                $imageName = uniqid() . '.png';
-                Storage::disk('public')->put('logo/' . $imageName, $decodedImage);
-                $logoUrl = 'logo/' . $imageName;
-                $this->ftpService->saveLogoFtp($decodedImage);
+                $logoUrl = $this->saveLogo($request->logo);
             }else{
-                $logoUrl = '';
+                $defaultLogoPath = 'defaultImage/logo-default.png';
+                $base64Image = base64_encode(Storage::disk('public')->get($defaultLogoPath));
+                $this->saveLogo($base64Image);
+                $logoUrl = Storage::url('defaultImage/logo-default.png');
             }
 
             $fieldsToFtp = [
@@ -64,7 +63,7 @@ class InformationController extends Controller
                 'company_phone',
             ]);
 
-            $data['logo'] = $logoUrl;
+            $data['logo'] = Storage::url($logoUrl);
 
             $information = Information::create($data);
 
@@ -94,22 +93,14 @@ class InformationController extends Controller
      * @param  \App\Models\Information  $information
      * @return \Illuminate\Http\Response
      */
-    public function show(Information $information)
+    public function getInformation()
     {
-        $information->load('contacts');
-
-        if ($information->logo) {
-            $imagePath = str_replace('/', '\\', $information->logo);
-            $fullPath = storage_path('app\public\\' . $imagePath);
-
-            if (File::exists($fullPath)) {
-                $imageData = Storage::disk('public')->get($information->logo);
-                $base64Image = base64_encode($imageData);
-                $information->logo = 'data:image/png;base64,' . $base64Image;
-            }
+        $information = Information::first();
+        if($information){
+            $information->load('contacts');
+            return response()->json($information, 200);
         }
-
-        return response()->json($information, 200);
+        return response()->json(['message' => 'Informações não encontradas'], 200);
     }
 
     /**
@@ -125,16 +116,19 @@ class InformationController extends Controller
 
         try {
             $logoUrl = null;
-            $this->deleteLogo($information);
 
-            if ($request->logo) {
-                $decodedImage = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $request->logo));
-                $imageName = uniqid() . '.png';
-                Storage::disk('public')->put('logo/' . $imageName, $decodedImage);
-                $logoUrl = 'logo/' . $imageName;
-                $this->ftpService->saveLogoFtp($decodedImage);
+            if ($request->logo && $request->logo != $information->logo) {
+                $this->deleteLogo($information);
+                $logoUrl = $this->saveLogo($request->logo);
             }else{
-                $logoUrl = '';
+                if(!$request->logo){
+                    $this->deleteLogo($information);
+                    $defaultLogoPath = 'defaultImage/logo-default.png';
+                    $base64Image = base64_encode(Storage::disk('public')->get($defaultLogoPath));
+                    $logoUrl = $this->saveLogo($base64Image);
+                }else{
+                    $logoUrl = $request->logo ? $information->logo : Storage::url('defaultImage/logo-default.png');
+                }
             }
 
             $fieldsToFtp = [
@@ -182,10 +176,24 @@ class InformationController extends Controller
 
     private function deleteLogo(Information $information)
     {
-        $imagePath = $information->logo;
-        $fullPath = storage_path('app/public/' . $imagePath);
-        if (File::exists($fullPath)) {
-            File::delete($fullPath);
+        $previousLogoPath = 'logo/' . basename(Storage::url($information->logo));
+
+        if (Storage::disk('public')->exists($previousLogoPath)) {
+            Storage::disk('public')->delete($previousLogoPath);
+            return true;
+        } else {
+            return false;
         }
+    }
+
+    private function saveLogo($base64image){
+        $decodedImage = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64image));
+        $imageName = uniqid() . '.png';
+        Storage::disk('public')->put('logo/' . $imageName, $decodedImage);
+        $logoUrl = 'logo/' . $imageName;
+        $this->ftpService->saveLogoFtp($decodedImage);
+        $logoUrl = Storage::url($logoUrl);
+
+        return $logoUrl;
     }
 }
