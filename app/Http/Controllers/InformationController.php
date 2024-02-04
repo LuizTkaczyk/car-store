@@ -5,11 +5,11 @@ namespace App\Http\Controllers;
 use App\Http\Requests\InformationRequest;
 use App\Models\Contact;
 use App\Models\Information;
+use App\Services\FtpService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\ImageManagerStatic as Image;
 
 class InformationController extends Controller
 {
@@ -19,6 +19,16 @@ class InformationController extends Controller
      * @param  \App\Http\Requests\InformationRequest  $request
      * @return \Illuminate\Http\Response
      */
+
+    protected $ftpService;
+
+
+    public function __construct(FtpService $ftpService)
+    {
+        $this->ftpService = $ftpService;
+
+    }
+
     public function store(InformationRequest $request)
     {
         if ($request->id) {
@@ -28,43 +38,33 @@ class InformationController extends Controller
         try {
             if ($request->logo) {
                 $decodedImage = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $request->logo));
-
-                if ($decodedImage === false) {
-                    return response()->json(['message' => 'Erro ao atualizar as informações', 'error' => 'Erro ao salvar imagem'], 500);
-                } else {
-                    $imageLogo = $this->convertImageLogo($decodedImage);
-                    $imageName = uniqid() . '.png';
-                    $logoUrl = 'logo/' . $imageName;
-                    $savedLogo = Storage::disk('ftp')->put('assets/logo/logo.png', $imageLogo);
-                    if(!$savedLogo) {
-                        return response()->json(['message' => 'Erro ao atualizar as informações', 'error' => 'Erro ao salvar imagem'], 500);
-                    }
-                }
-            } else {
+                $imageName = uniqid() . '.png';
+                Storage::disk('public')->put('logo/' . $imageName, $decodedImage);
+                $logoUrl = 'logo/' . $imageName;
+                $this->ftpService->saveLogoFtp($decodedImage);
+            }else{
                 $logoUrl = '';
             }
 
-            $infos = [
-                'title' => $request->company_name,
+            $fieldsToFtp = [
+                'company_name',
             ];
-            $jsonData = json_encode($infos, JSON_PRETTY_PRINT);
 
-            $savedInfos = Storage::disk('ftp')->put('assets/infos/info.json', $jsonData);
+            $dataToPass = $request->only($fieldsToFtp);
 
-            if(!$savedInfos) {
-                return response()->json(['message' => 'Erro ao atualizar as informações', 'error' => 'Erro ao salvar informações'], 500);
-            }
+            $this->ftpService->saveInfosFtp($dataToPass);
 
-            $data = [
-                'company_name' => $request->company_name,
-                'cnpj_cpf' => $request->cnpj_cpf,
-                'address' => $request->address,
-                'address_number' => $request->address_number,
-                'city' => $request->city,
-                'state' => $request->state,
-                'logo' => $logoUrl,
-                'company_phone' => $request->company_phone
-            ];
+            $data = $request->only([
+                'company_name',
+                'cnpj_cpf',
+                'address',
+                'address_number',
+                'city',
+                'state',
+                'company_phone',
+            ]);
+
+            $data['logo'] = $logoUrl;
 
             $information = Information::create($data);
 
@@ -125,46 +125,37 @@ class InformationController extends Controller
 
         try {
             $logoUrl = null;
-            $imageLogo = null;
             $this->deleteLogo($information);
 
             if ($request->logo) {
                 $decodedImage = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $request->logo));
-
-                if ($decodedImage === false) {
-                    return response()->json(['message' => 'Erro ao atualizar as informações', 'error' => 'Erro ao salvar imagem'], 500);
-                } else {
-                    $imageLogo = $this->convertImageLogo($decodedImage);
-                    $imageName = uniqid() . '.png';
-                    $logoUrl = 'logo/' . $imageName;
-                    $savedLogo = Storage::disk('ftp')->put('assets/logo/logo.png', $imageLogo);
-                    if(!$savedLogo) {
-                        $logoUrl = '';
-                        return response()->json(['message' => 'Erro ao atualizar as informações', 'error' => 'Erro ao salvar imagem'], 500);
-                    }
-                }
+                $imageName = uniqid() . '.png';
+                Storage::disk('public')->put('logo/' . $imageName, $decodedImage);
+                $logoUrl = 'logo/' . $imageName;
+                $this->ftpService->saveLogoFtp($decodedImage);
+            }else{
+                $logoUrl = '';
             }
 
-            $infos = [
-                'title' => $request->company_name,
+            $fieldsToFtp = [
+                'company_name',
             ];
-            $jsonData = json_encode($infos, JSON_PRETTY_PRINT);
 
-            $savedInfos = Storage::disk('ftp')->put('assets/infos/info.json', $jsonData);
+            $dataToPass = $request->only($fieldsToFtp);
 
-            if(!$savedInfos) {
-                return response()->json(['message' => 'Erro ao atualizar as informações', 'error' => 'Erro ao salvar informações'], 500);
-            }
+            $this->ftpService->saveInfosFtp($dataToPass);
 
-            $data = [
-                'company_name' => $request->company_name,
-                'cnpj_cpf' => $request->cnpj_cpf,
-                'address' => $request->address,
-                'address_number' => $request->address_number,
-                'city' => $request->city,
-                'state' => $request->state,
-                'logo' => $logoUrl
-            ];
+            $data = $request->only([
+                'company_name',
+                'cnpj_cpf',
+                'address',
+                'address_number',
+                'city',
+                'state',
+                'company_phone',
+            ]);
+
+            $data['logo'] = $logoUrl;
 
             $information->update($data);
 
@@ -196,16 +187,5 @@ class InformationController extends Controller
         if (File::exists($fullPath)) {
             File::delete($fullPath);
         }
-    }
-
-    private function convertImageLogo($base64Image)
-    {
-        $img = Image::make($base64Image);
-
-        $img->trim('transparent', ['top', 'bottom', 'left', 'right']);
-
-        $imageConverted = $img->encode('png')->encoded;
-
-        return $imageConverted;
     }
 }
