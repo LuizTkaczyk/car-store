@@ -139,6 +139,11 @@ class VehicleController extends Controller
 
             $vehicle->update($data);
             if (count($request->images)) {
+
+                if (count($request->images) > 5) {
+                    return response()->json(['message' => 'Limite de imagens atingido'], 400);
+                }
+
                 foreach ($request->images as $base64Image) {
                     Images::where('vehicle_id', $vehicle->id)->where('file', 'defaultImage')->delete();
                     if (!array_key_exists('url', $base64Image)) {
